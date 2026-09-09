@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunpart</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #F0EFF4;
+  --surface: #FFFFFF;
+  --surface2: #F7F6FA;
+  --ink: #221F33;
+  --muted: #6B6880;
+  --line: #D8D6E3;
+  --accent: #5B4FA8;
+  --accent-soft: #EAE7F6;
+  --accent-ink: #FFFFFF;
+  --ok: #2C7A4B;
+  --ok-soft: #E3F0E8;
+  --warn: #A8720E;
+  --warn-soft: #F6EDDA;
+  --err: #BE3D2F;
+  --err-soft: #F8E6E3;
+  --term-bg: #1A1826;
+  --term-ink: #DDD9EE;
+  --term-dim: #8B86A8;
+  --term-hi: #C0B4F0;
+  --pa: #7C6FC6; --pb: #C79A3B; --pd: #3E9C93; --pe: #C2699C;
+  --pf: #5C87C6; --pg: #64A05E; --ph: #8A8FA8; --pfree: #CBC9D6;
+  --seg-ink: #FFFFFF;
+  --focus: #5B4FA8;
+  font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17151F;
+    --surface: #201D2C;
+    --surface2: #262336;
+    --ink: #E8E6F2;
+    --muted: #9A96AE;
+    --line: #37334A;
+    --accent: #9C90E8;
+    --accent-soft: #2C2745;
+    --accent-ink: #17151F;
+    --ok: #62BE8C;
+    --ok-soft: #1E3129;
+    --warn: #D9A84E;
+    --warn-soft: #362C18;
+    --err: #E07A6C;
+    --err-soft: #3A2320;
+    --term-bg: #131020;
+    --term-ink: #DDD9EE;
+    --term-dim: #7B7694;
+    --term-hi: #C0B4F0;
+    --pa: #8B7ED8; --pb: #D2A855; --pd: #4FADA4; --pe: #CF7FAD;
+    --pf: #6F97D4; --pg: #77B071; --ph: #9AA0B8; --pfree: #34313F;
+    --seg-ink: #17151F;
+    --focus: #9C90E8;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17151F;
+  --surface: #201D2C;
+  --surface2: #262336;
+  --ink: #E8E6F2;
+  --muted: #9A96AE;
+  --line: #37334A;
+  --accent: #9C90E8;
+  --accent-soft: #2C2745;
+  --accent-ink: #17151F;
+  --ok: #62BE8C;
+  --ok-soft: #1E3129;
+  --warn: #D9A84E;
+  --warn-soft: #362C18;
+  --err: #E07A6C;
+  --err-soft: #3A2320;
+  --term-bg: #131020;
+  --term-ink: #DDD9EE;
+  --term-dim: #7B7694;
+  --term-hi: #C0B4F0;
+  --pa: #8B7ED8; --pb: #D2A855; --pd: #4FADA4; --pe: #CF7FAD;
+  --pf: #6F97D4; --pg: #77B071; --ph: #9AA0B8; --pfree: #34313F;
+  --seg-ink: #17151F;
+  --focus: #9C90E8;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.mono, code, pre, input, select { font-family: "IBM Plex Mono", "Menlo", "Consolas", monospace; }
+.wrap { max-width: 1060px; margin: 0 auto; padding: 28px 20px 64px; }
+
+/* Masthead — set like a man page header */
+.mast {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px; color: var(--muted);
+  letter-spacing: .04em;
+  padding-bottom: 10px;
+}
+.mast .mid { display: none; }
+@media (min-width: 640px) { .mast .mid { display: block; } }
+h1 {
+  font-size: 30px; font-weight: 700; letter-spacing: -.01em;
+  margin: 2px 0 6px; text-wrap: balance;
+}
+h1 .sect { color: var(--accent); }
+.lede { color: var(--muted); max-width: 62ch; margin: 0 0 26px; }
+.lede code { font-size: 13px; background: var(--surface2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px 20px;
+}
+.card + .card { margin-top: 18px; }
+.card h2 {
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--muted);
+  margin: 0 0 14px;
+}
+
+/* Geometry */
+.geo-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.geo-row input[type=text] {
+  flex: 1 1 260px;
+  background: var(--surface2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 10px; font-size: 14px;
+}
+input:focus-visible, select:focus-visible, button:focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 1px;
+}
+button {
+  font-family: "Archivo", sans-serif; font-size: 13px; font-weight: 600;
+  background: var(--surface2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 14px; cursor: pointer;
+}
+button:hover { border-color: var(--accent); color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.primary:hover { filter: brightness(1.08); color: var(--accent-ink); }
+select {
+  background: var(--surface2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 8px; font-size: 13px;
+}
+.geo-fields {
+  display: flex; flex-wrap: wrap; gap: 14px 22px; margin-top: 14px; align-items: end;
+}
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted); font-weight: 600;
+}
+.field input {
+  width: 92px; background: var(--surface2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 7px 9px; font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.geo-facts {
+  margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line);
+  display: flex; flex-wrap: wrap; gap: 6px 28px;
+  font-family: "IBM Plex Mono", monospace; font-size: 13px;
+  color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.geo-facts b { color: var(--ink); font-weight: 600; }
+
+/* Disk map */
+.diskmap { position: relative; margin-top: 4px; }
+.dm-bar {
+  display: flex; height: 46px; border-radius: 6px; overflow: hidden;
+  border: 1px solid var(--line);
+}
+.dm-seg {
+  min-width: 3px; display: flex; align-items: center; justify-content: center;
+  color: var(--seg-ink); font-family: "IBM Plex Mono", monospace;
+  font-size: 12px; font-weight: 600; overflow: hidden; white-space: nowrap;
+}
+.dm-seg.free { color: var(--muted); background: var(--pfree); }
+.dm-tick {
+  position: absolute; top: -6px; bottom: -6px; width: 0;
+  border-left: 2px dashed var(--err);
+}
+.dm-tick span {
+  position: absolute; top: -16px; left: -4px; transform: translateX(-50%);
+  font-family: "IBM Plex Mono", monospace; font-size: 11px;
+  color: var(--err); white-space: nowrap; background: var(--surface); padding: 0 4px;
+}
+.dm-legend {
+  display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px;
+  font-family: "IBM Plex Mono", monospace; font-size: 12.5px;
+  color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.dm-legend .sw {
+  display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+  margin-right: 6px; vertical-align: baseline;
+}
+.dm-legend b { color: var(--ink); font-weight: 600; }
+
+/* Main grid */
+.grid { display: grid; grid-template-columns: 1fr; gap: 18px; margin-top: 18px; }
+
+/* Partition editor */
+table.parts { width: 100%; border-collapse: collapse; }
+.parts-scroll { overflow-x: auto; }
+table.parts th {
+  text-align: left; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--muted); font-weight: 600;
+  padding: 4px 8px 8px; border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+table.parts td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.parts tr:last-child td { border-bottom: none; }
+td.letter {
+  font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 14px;
+}
+td.letter .dot {
+  display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 7px;
+}
+tr.off td:not(.letter):not(.oncol) { opacity: .38; }
+td input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+td input.mount {
+  width: 120px; background: var(--surface2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 5px; padding: 5px 7px; font-size: 13px;
+}
+td select.mode { padding: 5px 4px; font-size: 12.5px; }
+td input.val {
+  width: 72px; background: var(--surface2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 5px; padding: 5px 7px;
+  font-size: 13px; font-variant-numeric: tabular-nums; text-align: right;
+}
+td.calc {
+  font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--muted);
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+td.calc b { color: var(--ink); font-weight: 600; }
+tr.crow td {
+  color: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: 12.5px;
+  background: var(--surface2);
+}
+.editor-foot { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.editor-foot .note { font-size: 12.5px; color: var(--muted); }
+
+/* Checks */
+.checks { display: flex; flex-direction: column; gap: 8px; }
+.check {
+  display: flex; gap: 10px; align-items: baseline;
+  border-radius: 6px; padding: 8px 11px; font-size: 13.5px;
+  background: var(--surface2);
+}
+.check .glyph {
+  font-family: "IBM Plex Mono", monospace; font-weight: 600; flex: none;
+  width: 1.2em; text-align: center;
+}
+.check.ok   { background: var(--ok-soft); }   .check.ok .glyph   { color: var(--ok); }
+.check.warn { background: var(--warn-soft); } .check.warn .glyph { color: var(--warn); }
+.check.err  { background: var(--err-soft); }  .check.err .glyph  { color: var(--err); }
+.check .msg b { font-weight: 600; }
+.opt-row {
+  margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line);
+  display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted);
+}
+.opt-row input { accent-color: var(--accent); width: 15px; height: 15px; }
+
+/* Output */
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.tabs button { padding: 7px 12px; }
+.tabs button[aria-selected="true"] {
+  background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+}
+.termwrap { position: relative; }
+pre.term {
+  background: var(--term-bg); color: var(--term-ink);
+  border-radius: 8px; padding: 16px 18px; margin: 0;
+  font-size: 13px; line-height: 1.55; overflow-x: auto;
+  font-variant-numeric: tabular-nums;
+}
+pre.term .dim { color: var(--term-dim); }
+pre.term .hi { color: var(--term-hi); font-weight: 600; }
+.copybtn {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
+  color: var(--term-ink); font-size: 12px; padding: 4px 10px;
+}
+.copybtn:hover { color: var(--term-hi); border-color: var(--term-hi); }
+.outnote { font-size: 12.5px; color: var(--muted); margin-top: 10px; max-width: 78ch; }
+
+footer {
+  margin-top: 36px; font-family: "IBM Plex Mono", monospace;
+  font-size: 12px; color: var(--muted); display: flex; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dm-seg { transition: width .25s ease; }
+}
+</style>
+
+<div class="wrap">
+  <div class="mast">
+    <span>SUNPART(8)</span>
+    <span class="mid">SunOS Disk Maintenance</span>
+    <span>SUNPART(8)</span>
+  </div>
+  <h1>sunpart <span class="sect">— disk partition layout planner</span></h1>
+  <p class="lede">Describe your disk the way <code>format</code> reports it, lay out slices
+  <span class="mono">a–h</span> in megabytes, and get back cylinder-aligned numbers you can type
+  straight into the partition menu. Everything is packed on cylinder boundaries, so overlaps are
+  impossible; the checks below tell you if the layout will boot and install.</p>
+
+  <section class="card">
+    <h2>Disk geometry</h2>
+    <div class="geo-row">
+      <input type="text" id="geoline" spellcheck="false"
+        value="cyl 2733 alt 2 hd 19 sec 80"
+        aria-label="Geometry line from format label">
+      <button id="parsebtn" class="primary">Parse label line</button>
+      <select id="preset" aria-label="Disk preset">
+        <option value="">Known Sun disks…</option>
+      </select>
+    </div>
+    <div class="geo-fields">
+      <div class="field"><label for="f_ncyl">cyl (data)</label><input id="f_ncyl" inputmode="numeric"></div>
+      <div class="field"><label for="f_alt">alt</label><input id="f_alt" inputmode="numeric"></div>
+      <div class="field"><label for="f_hd">hd (heads)</label><input id="f_hd" inputmode="numeric"></div>
+      <div class="field"><label for="f_sec">sec/track</label><input id="f_sec" inputmode="numeric"></div>
+    </div>
+    <div class="geo-facts" id="geofacts"></div>
+  </section>
+
+  <section class="card">
+    <h2>Disk map</h2>
+    <div class="diskmap">
+      <div class="dm-bar" id="dmbar"></div>
+      <div id="dmtick"></div>
+    </div>
+    <div class="dm-legend" id="dmlegend"></div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Partition editor</h2>
+      <div class="parts-scroll">
+      <table class="parts" id="ptable">
+        <thead>
+          <tr>
+            <th>Part</th><th>On</th><th>Mount</th><th>Size</th><th></th><th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="pbody"></tbody>
+      </table>
+      </div>
+      <div class="editor-foot">
+        <button id="suggestbtn">Suggest a layout for this disk</button>
+        <span class="note">Sizes round <em>up</em> to whole cylinders. One slice can take the
+        remainder (the “free hog”). <span class="mono">c</span> always covers the full disk.</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Checks</h2>
+      <div class="checks" id="checks"></div>
+      <div class="opt-row">
+        <input type="checkbox" id="opt1g" checked>
+        <label for="opt1g">Enforce 1&nbsp;GB boot limit on <span class="mono">a</span>
+        (old boot PROMs can’t read past the first 1&nbsp;GB)</label>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:18px">
+    <h2>Enter it into format</h2>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="sunos">SunOS 4.x dialogue</button>
+      <button role="tab" aria-selected="false" data-tab="solaris">Solaris 2.x dialogue</button>
+      <button role="tab" aria-selected="false" data-tab="verify">Expected “p” printout</button>
+    </div>
+    <div class="termwrap">
+      <pre class="term" id="termout"></pre>
+      <button class="copybtn" id="copybtn">Copy</button>
+    </div>
+    <p class="outnote" id="outnote"></p>
+  </section>
+
+  <footer>
+    <span>1 block = 512 bytes · 1 MB = 2048 blocks</span>
+    <span>label before you leave the partition menu</span>
+  </footer>
+</div>
+
+<datalist id="mounts">
+  <option value="/"></option><option value="swap"></option><option value="/usr"></option>
+  <option value="/var"></option><option value="/home"></option><option value="/export/home"></option>
+  <option value="/opt"></option><option value="/tmp"></option><option value="/export"></option>
+</datalist>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const BLK = 512, MB_BLKS = 2048, GB_BLKS = 2097152; // 1 GB = 1024 MB
+const LETTERS = ["a","b","d","e","f","g","h"];      // c handled separately
+const COLORS = { a:"--pa", b:"--pb", d:"--pd", e:"--pe", f:"--pf", g:"--pg", h:"--ph" };
+const SOLNUM = { a:0, b:1, c:2, d:3, e:4, f:5, g:6, h:7 };
+
+const PRESETS = [
+  ["SUN0207 (207 MB)",  1254, 2,  9, 36],
+  ["SUN0424 (424 MB)",  1151, 2,  9, 80],
+  ["SUN0535 (535 MB)",  1866, 2,  7, 80],
+  ["SUN0669 (669 MB)",  1614, 2, 15, 54],
+  ["SUN1.05 (1.05 GB)", 2036, 2, 14, 72],
+  ["SUN1.3G (1.3 GB)",  1965, 2, 17, 80],
+  ["SUN2.1G (2.1 GB)",  2733, 2, 19, 80],
+  ["SUN2.9G (2.9 GB)",  2734, 2, 21, 99],
+  ["SUN4.2G (4.2 GB)",  3880, 2, 16, 135],
+];
+
+let state = {
+  ncyl: 2733, alt: 2, hd: 19, sec: 80,
+  enforce1g: true,
+  tab: "sunos",
+  rows: {
+    a: { on: true,  mount: "/",     mode: "mb",   val: 64  },
+    b: { on: true,  mount: "swap",  mode: "mb",   val: 128 },
+    d: { on: false, mount: "",      mode: "mb",   val: 0   },
+    e: { on: false, mount: "",      mode: "mb",   val: 0   },
+    f: { on: false, mount: "",      mode: "mb",   val: 0   },
+    g: { on: true,  mount: "/usr",  mode: "mb",   val: 500 },
+    h: { on: true,  mount: "/home", mode: "rest", val: 0   },
+  },
+};
+
+try {
+  const saved = JSON.parse(localStorage.getItem("sunpart-v1"));
+  if (saved && saved.rows && saved.ncyl > 0) state = saved;
+} catch (e) { /* private mode etc. — defaults are fine */ }
+
+function save() {
+  try { localStorage.setItem("sunpart-v1", JSON.stringify(state)); } catch (e) {}
+}
+
+const fmt = n => n.toLocaleString("en-US");
+const mb1 = blocks => (blocks / MB_BLKS).toFixed(1);
+
+function cylBlocks() { return state.hd * state.sec; }
+
+// ---- layout computation: pack enabled slices in letter order from cyl 0 ----
+function computeLayout() {
+  const cb = cylBlocks();
+  const out = { parts: [], restLetters: [], fixedCyls: 0, cb };
+  if (!(state.ncyl > 0 && cb > 0)) return out;
+
+  for (const L of LETTERS) {
+    const r = state.rows[L];
+    if (!r.on) continue;
+    if (r.mode === "rest") { out.restLetters.push(L); continue; }
+    let cyls;
+    if (r.mode === "cyl") cyls = Math.max(0, Math.floor(+r.val || 0));
+    else cyls = Math.ceil(((+r.val || 0) * MB_BLKS) / cb);
+    out.fixedCyls += cyls;
+    out.parts.push({ letter: L, mount: r.mount, cyls, rest: false });
+  }
+  const remain = state.ncyl - out.fixedCyls;
+  for (const L of out.restLetters) {
+    const cyls = out.restLetters.length === 1 ? Math.max(0, remain) : 0;
+    out.parts.push({ letter: L, mount: state.rows[L].mount, cyls, rest: true });
+  }
+  out.parts.sort((x, y) => x.letter < y.letter ? -1 : 1);
+  let start = 0;
+  for (const p of out.parts) {
+    p.start = start; p.blocks = p.cyls * cb; p.end = start + p.cyls;
+    start += p.cyls;
+  }
+  out.usedCyls = start;
+  out.freeCyls = Math.max(0, state.ncyl - start);
+  return out;
+}
+
+// ---- validation ----
+function validate(lay) {
+  const checks = [];
+  const add = (lvl, html) => checks.push({ lvl, html });
+  const cb = lay.cb;
+
+  if (!(state.ncyl > 0 && state.hd > 0 && state.sec > 0)) {
+    add("err", "Geometry is incomplete — need cyl, hd and sec all &gt; 0.");
+    return checks;
+  }
+  const root = lay.parts.find(p => p.mount.trim() === "/");
+  const a = lay.parts.find(p => p.letter === "a");
+
+  if (!root) add("err", "No root (<b>/</b>) partition. The system needs one to boot.");
+  else if (root.letter !== "a") add("err", `Root is on <b>${root.letter}</b> — the PROM boots from partition <b>a</b>. Put / on a.`);
+  else add("ok", "Root is on <b>a</b>, starting at cylinder 0.");
+
+  if (state.enforce1g && a && a.blocks > 0) {
+    const endBlk = a.end * cb;
+    if (endBlk > GB_BLKS) {
+      const maxCyl = Math.floor(GB_BLKS / cb);
+      add("err", `Partition <b>a</b> ends ${mb1(endBlk)} MB into the disk — past the 1 GB boot limit. Keep a within the first <b>${fmt(maxCyl)}</b> cylinders (≤ ${mb1(maxCyl * cb)} MB).`);
+    } else {
+      add("ok", `Partition <b>a</b> ends at ${mb1(endBlk)} MB — inside the 1 GB boot window.`);
+    }
+  }
+
+  if (lay.restLetters.length > 1)
+    add("err", `Only one slice can be the free hog — <b>${lay.restLetters.join(", ")}</b> are all set to “rest of disk”.`);
+
+  if (lay.fixedCyls > state.ncyl) {
+    const overC = lay.fixedCyls - state.ncyl;
+    add("err", `Layout is over-committed by <b>${fmt(overC)}</b> cylinders (${mb1(overC * cb)} MB). Shrink something.`);
+  } else {
+    add("ok", "Slices are packed on cylinder boundaries — no overlaps, nothing past the end of the disk.");
+  }
+
+  if (lay.freeCyls > 0 && lay.restLetters.length === 0)
+    add("warn", `<b>${fmt(lay.freeCyls)}</b> cylinders (${mb1(lay.freeCyls * cb)} MB) are unallocated. Set one slice to “rest of disk” to use them.`);
+
+  for (const p of lay.parts) {
+    if (p.blocks === 0 && !(p.rest && lay.restLetters.length > 1))
+      add("warn", `Partition <b>${p.letter}</b> is enabled but computes to 0 cylinders.`);
+  }
+
+  const swap = lay.parts.find(p => p.mount.trim().toLowerCase() === "swap");
+  if (!swap || swap.blocks === 0)
+    add("warn", "No swap slice. SunOS wants swap on <b>b</b> — and savecore needs swap ≥ physical RAM to hold a crash dump.");
+  else if (swap.letter !== "b")
+    add("warn", `Swap is on <b>${swap.letter}</b> — the kernel’s default dump/swap device is <b>b</b>.`);
+  else
+    add("ok", `Swap on <b>b</b>: ${mb1(swap.blocks)} MB. Keep it ≥ physical RAM if you want crash dumps.`);
+
+  if (root && root.blocks > 0) {
+    const rootMB = root.blocks / MB_BLKS;
+    const hasUsr = lay.parts.some(p => p.mount.trim() === "/usr" && p.blocks > 0);
+    if (!hasUsr && rootMB < 250)
+      add("warn", `No separate /usr, and / is only ${rootMB.toFixed(0)} MB — a full install puts /usr inside / and will not fit. Give / ~300 MB or add /usr.`);
+    else if (rootMB < 24)
+      add("warn", `/ is only ${rootMB.toFixed(0)} MB — suninstall typically needs at least ~25–32 MB for root alone.`);
+  }
+
+  add("ok", `<b>c</b> spans the whole disk: 0 – ${fmt(state.ncyl)} cyl, ${fmt(state.ncyl * cb)} blocks.`);
+  return checks;
+}
+
+// ---- rendering ----
+function renderGeoFacts(lay) {
+  const cb = lay.cb;
+  const total = state.ncyl * cb;
+  $("geofacts").innerHTML =
+    `<span>cylinder = <b>${fmt(cb)}</b> blocks (${(cb / MB_BLKS).toFixed(3)} MB)</span>` +
+    `<span>usable = <b>${fmt(state.ncyl)}</b> cyl = <b>${fmt(total)}</b> blocks</span>` +
+    `<span>capacity = <b>${mb1(total)}</b> MB</span>` +
+    `<span>alt cylinders reserved: <b>${state.alt}</b></span>`;
+}
+
+function renderMap(lay) {
+  const bar = $("dmbar"), leg = $("dmlegend"), tickWrap = $("dmtick");
+  bar.innerHTML = ""; leg.innerHTML = ""; tickWrap.innerHTML = "";
+  const totalCyl = state.ncyl;
+  if (!(totalCyl > 0)) return;
+
+  const segs = lay.parts.filter(p => p.cyls > 0).map(p => ({ ...p }));
+  if (lay.freeCyls > 0) segs.push({ letter: "·", mount: "unallocated", cyls: lay.freeCyls, free: true, start: lay.usedCyls, blocks: lay.freeCyls * lay.cb, end: totalCyl });
+  segs.sort((x, y) => x.start - y.start);
+
+  for (const s of segs) {
+    const div = document.createElement("div");
+    div.className = "dm-seg" + (s.free ? " free" : "");
+    const pct = (s.cyls / totalCyl) * 100;
+    div.style.width = pct + "%";
+    if (!s.free) div.style.background = `var(${COLORS[s.letter]})`;
+    if (pct > 4) div.textContent = s.free ? "free" : s.letter;
+    div.title = `${s.free ? "unallocated" : s.letter + "  " + (s.mount || "(no mount)")} — cyl ${fmt(s.start)}–${fmt(s.end - 1)}, ${mb1(s.blocks)} MB`;
+    bar.appendChild(div);
+  }
+
+  const totalBlocks = totalCyl * lay.cb;
+  if (totalBlocks > GB_BLKS) {
+    const t = document.createElement("div");
+    t.className = "dm-tick";
+    t.style.left = (GB_BLKS / totalBlocks) * 100 + "%";
+    t.innerHTML = "<span>1 GB boot limit</span>";
+    tickWrap.appendChild(t);
+  }
+
+  for (const s of segs) {
+    const item = document.createElement("span");
+    const sw = s.free ? `background: var(--pfree)` : `background: var(${COLORS[s.letter]})`;
+    item.innerHTML = `<span class="sw" style="${sw}"></span><b>${s.free ? "free" : s.letter}</b> ${s.free ? "" : (s.mount || "—")} · ${mb1(s.blocks)} MB`;
+    leg.appendChild(item);
+  }
+}
+
+function renderEditor(lay) {
+  const body = $("pbody");
+  body.innerHTML = "";
+  for (const L of LETTERS.slice(0, 2).concat(["c"]).concat(LETTERS.slice(2))) {
+    if (L === "c") {
+      const tr = document.createElement("tr");
+      tr.className = "crow";
+      tr.innerHTML = `<td class="letter">c</td><td colspan="4">whole disk (backup) — leave as-is</td>
+        <td class="calc">0 – ${fmt(state.ncyl)} cyl · ${fmt(state.ncyl * lay.cb)} blk</td>`;
+      body.appendChild(tr);
+      continue;
+    }
+    const r = state.rows[L];
+    const p = lay.parts.find(q => q.letter === L);
+    const tr = document.createElement("tr");
+    if (!r.on) tr.className = "off";
+    const calc = p
+      ? `start <b>${fmt(p.start)}</b> · <b>${fmt(p.cyls)}</b> cyl · ${fmt(p.blocks)} blk · <b>${mb1(p.blocks)}</b> MB`
+      : `—`;
+    tr.innerHTML = `
+      <td class="letter"><span class="dot" style="background:var(${COLORS[L]})"></span>${L}</td>
+      <td class="oncol"><input type="checkbox" data-l="${L}" data-k="on" ${r.on ? "checked" : ""} aria-label="enable ${L}"></td>
+      <td><input class="mount" list="mounts" data-l="${L}" data-k="mount" value="${r.mount.replace(/"/g, "&quot;")}" placeholder="mount" spellcheck="false" aria-label="mount for ${L}"></td>
+      <td><select class="mode" data-l="${L}" data-k="mode" aria-label="size mode for ${L}">
+            <option value="mb" ${r.mode === "mb" ? "selected" : ""}>MB</option>
+            <option value="cyl" ${r.mode === "cyl" ? "selected" : ""}>cyl</option>
+            <option value="rest" ${r.mode === "rest" ? "selected" : ""}>rest of disk</option>
+          </select></td>
+      <td><input class="val" data-l="${L}" data-k="val" inputmode="numeric" value="${r.mode === "rest" ? "" : r.val}" ${r.mode === "rest" ? "disabled" : ""} aria-label="size value for ${L}"></td>
+      <td class="calc">${calc}</td>`;
+    body.appendChild(tr);
+  }
+}
+
+function renderChecks(checks) {
+  const el = $("checks");
+  el.innerHTML = "";
+  const glyphs = { ok: "✓", warn: "!", err: "✗" };
+  const order = { err: 0, warn: 1, ok: 2 };
+  checks.sort((x, y) => order[x.lvl] - order[y.lvl]);
+  for (const c of checks) {
+    const d = document.createElement("div");
+    d.className = "check " + c.lvl;
+    d.innerHTML = `<span class="glyph">${glyphs[c.lvl]}</span><span class="msg">${c.html}</span>`;
+    el.appendChild(d);
+  }
+}
+
+// ---- format output ----
+function allEight(lay) {
+  const cb = lay.cb;
+  const out = [];
+  for (const L of ["a","b","c","d","e","f","g","h"]) {
+    if (L === "c") { out.push({ letter: "c", mount: "backup", start: 0, cyls: state.ncyl, blocks: state.ncyl * cb }); continue; }
+    const p = lay.parts.find(q => q.letter === L && q.blocks > 0);
+    out.push(p || { letter: L, mount: state.rows[L].mount, start: 0, cyls: 0, blocks: 0 });
+  }
+  return out;
+}
+
+function solTagFlag(p) {
+  const m = (p.mount || "").trim();
+  if (p.letter === "c") return ["backup", "wm"];
+  if (m === "/") return ["root", "wm"];
+  if (m.toLowerCase() === "swap") return ["swap", "wu"];
+  if (m === "/usr") return ["usr", "wm"];
+  if (m === "/var") return ["var", "wm"];
+  if (m === "/home" || m === "/export/home") return ["home", "wm"];
+  return ["unassigned", "wm"];
+}
+
+function buildSunOS(lay) {
+  const eight = allEight(lay);
+  let s = `<span class="dim"># at the format&gt; prompt:</span>\n`;
+  s += `format&gt; <span class="hi">partition</span>\n`;
+  for (const p of eight) {
+    if (p.letter === "c") {
+      s += `<span class="dim">(leave c alone — it must stay 0 / ${fmt(p.blocks)} blocks)</span>\n`;
+      continue;
+    }
+    s += `partition&gt; <span class="hi">${p.letter}</span>\n`;
+    s += `        Enter new starting cyl [..]: <span class="hi">${p.start}</span>\n`;
+    s += `        Enter new # blocks [..]: <span class="hi">${fmt(p.blocks).replace(/,/g, "")}</span>   <span class="dim">(= ${p.cyls}/0/0)</span>\n`;
+  }
+  s += `partition&gt; <span class="hi">label</span>\n`;
+  s += `Ready to label disk, continue? <span class="hi">y</span>\n`;
+  s += `partition&gt; <span class="hi">quit</span>\n`;
+  return s;
+}
+
+function buildSolaris(lay) {
+  const eight = allEight(lay);
+  let s = `<span class="dim"># at the format&gt; prompt:</span>\n`;
+  s += `format&gt; <span class="hi">partition</span>\n`;
+  for (const p of eight) {
+    if (p.letter === "c") { s += `<span class="dim">(leave slice 2 — backup — alone)</span>\n`; continue; }
+    const [tag, flag] = solTagFlag(p);
+    s += `partition&gt; <span class="hi">${SOLNUM[p.letter]}</span>\n`;
+    s += `        Enter partition id tag [..]: <span class="hi">${tag}</span>\n`;
+    s += `        Enter partition permission flags [..]: <span class="hi">${flag}</span>\n`;
+    s += `        Enter new starting cyl [..]: <span class="hi">${p.start}</span>\n`;
+    s += `        Enter partition size [..]: <span class="hi">${p.cyls}c</span>\n`;
+  }
+  s += `partition&gt; <span class="hi">label</span>\n`;
+  s += `Ready to label disk, continue? <span class="hi">y</span>\n`;
+  s += `partition&gt; <span class="hi">quit</span>\n`;
+  return s;
+}
+
+function buildVerify(lay) {
+  const eight = allEight(lay);
+  let s = `<span class="dim"># SunOS 4.x — what "p" should print after labeling:</span>\n`;
+  for (const p of eight) {
+    s += `partition ${p.letter} - starting cyl ${String(p.start).padStart(6)}, # blocks ${String(p.blocks).padStart(9)} (${p.cyls}/0/0)\n`;
+  }
+  s += `\n<span class="dim"># Solaris 2.x — what "print" should show:</span>\n`;
+  s += `Part      Tag    Flag     Cylinders        Size            Blocks\n`;
+  for (const p of eight) {
+    const [tag, flag] = solTagFlag(p);
+    const range = p.blocks > 0 ? `${String(p.start).padStart(4)} - ${String(p.start + p.cyls - 1).padStart(4)}` : `   0        `;
+    const size = p.blocks > 0 ? `${(p.blocks / MB_BLKS).toFixed(2)}MB` : "0";
+    s += `  ${SOLNUM[p.letter]} ${tag.padStart(10)}    ${flag}    ${range}  ${size.padStart(10)}    (${p.cyls}/0/0) ${String(p.blocks).padStart(9)}\n`;
+  }
+  return s;
+}
+
+const NOTES = {
+  sunos: "Unused slices are explicitly set to start 0, 0 blocks — old labels often carry stale junk entries that confuse installs. You can also answer # blocks as cylinders/tracks/sectors, e.g. 86/0/0. Don’t forget label before quitting.",
+  solaris: "Slices are numbered 0–7 (a=0 … h=7). Sizes are given in whole cylinders (the “Nc” form) so they land exactly where planned. Swap gets flag wu; everything else wm.",
+  verify: "“p” (print) in format’s partition menu prints the current partition table. After labeling, run p and compare it line-for-line with this. If the starting cylinders or block counts differ, the label didn’t take — re-enter and label again.",
+};
+
+function renderOutput(lay) {
+  const t = state.tab;
+  $("termout").innerHTML = t === "sunos" ? buildSunOS(lay) : t === "solaris" ? buildSolaris(lay) : buildVerify(lay);
+  $("outnote").textContent = NOTES[t];
+  document.querySelectorAll(".tabs button").forEach(b =>
+    b.setAttribute("aria-selected", b.dataset.tab === t ? "true" : "false"));
+}
+
+function renderAll() {
+  const lay = computeLayout();
+  renderGeoFacts(lay);
+  renderMap(lay);
+  renderEditor(lay);
+  renderChecks(validate(lay));
+  renderOutput(lay);
+  $("f_ncyl").value = state.ncyl; $("f_alt").value = state.alt;
+  $("f_hd").value = state.hd; $("f_sec").value = state.sec;
+  $("opt1g").checked = state.enforce1g;
+  save();
+}
+
+// ---- events ----
+$("parsebtn").addEventListener("click", () => {
+  const m = $("geoline").value.match(/cyl\D+(\d+)\D+alt\D+(\d+)\D+hd\D+(\d+)\D+sec\D+(\d+)/i);
+  if (!m) {
+    $("geoline").style.borderColor = "var(--err)";
+    setTimeout(() => { $("geoline").style.borderColor = ""; }, 1200);
+    return;
+  }
+  state.ncyl = +m[1]; state.alt = +m[2]; state.hd = +m[3]; state.sec = +m[4];
+  renderAll();
+});
+
+for (const [id, key] of [["f_ncyl","ncyl"],["f_alt","alt"],["f_hd","hd"],["f_sec","sec"]]) {
+  $(id).addEventListener("change", e => {
+    state[key] = Math.max(0, Math.floor(+e.target.value || 0));
+    $("geoline").value = `cyl ${state.ncyl} alt ${state.alt} hd ${state.hd} sec ${state.sec}`;
+    renderAll();
+  });
+}
+
+const presetSel = $("preset");
+for (let i = 0; i < PRESETS.length; i++) {
+  const o = document.createElement("option");
+  o.value = i; o.textContent = PRESETS[i][0];
+  presetSel.appendChild(o);
+}
+presetSel.addEventListener("change", () => {
+  if (presetSel.value === "") return;
+  const [, ncyl, alt, hd, sec] = PRESETS[+presetSel.value];
+  state.ncyl = ncyl; state.alt = alt; state.hd = hd; state.sec = sec;
+  $("geoline").value = `cyl ${ncyl} alt ${alt} hd ${hd} sec ${sec}`;
+  presetSel.value = "";
+  renderAll();
+});
+
+$("pbody").addEventListener("change", e => {
+  const L = e.target.dataset.l, k = e.target.dataset.k;
+  if (!L) return;
+  const r = state.rows[L];
+  if (k === "on") r.on = e.target.checked;
+  else if (k === "mount") r.mount = e.target.value;
+  else if (k === "mode") r.mode = e.target.value;
+  else if (k === "val") r.val = Math.max(0, +e.target.value || 0);
+  renderAll();
+});
+
+$("opt1g").addEventListener("change", e => { state.enforce1g = e.target.checked; renderAll(); });
+
+$("suggestbtn").addEventListener("click", () => {
+  const totalMB = (state.ncyl * cylBlocks()) / MB_BLKS;
+  const r = state.rows;
+  for (const L of LETTERS) { r[L].on = false; r[L].mode = "mb"; }
+  r.a = { on: true, mount: "/", mode: "mb", val: totalMB < 300 ? 32 : 64 };
+  r.b = { on: true, mount: "swap", mode: "mb", val: totalMB < 300 ? 32 : totalMB < 900 ? 64 : 128 };
+  if (totalMB >= 300) {
+    r.g = { on: true, mount: "/usr", mode: "mb", val: totalMB < 900 ? 250 : 500 };
+    r.h = { on: true, mount: totalMB < 900 ? "/home" : "/home", mode: "rest", val: 0 };
+  } else {
+    r.g = { on: true, mount: "/usr", mode: "rest", val: 0 };
+    r.h = { on: false, mount: "", mode: "mb", val: 0 };
+  }
+  r.d.mount = ""; r.e.mount = ""; r.f.mount = "";
+  renderAll();
+});
+
+document.querySelector(".tabs").addEventListener("click", e => {
+  const b = e.target.closest("button[data-tab]");
+  if (!b) return;
+  state.tab = b.dataset.tab;
+  renderAll();
+});
+
+$("copybtn").addEventListener("click", async () => {
+  const text = $("termout").innerText;
+  try {
+    await navigator.clipboard.writeText(text);
+    $("copybtn").textContent = "Copied";
+  } catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); ta.remove();
+    $("copybtn").textContent = "Copied";
+  }
+  setTimeout(() => { $("copybtn").textContent = "Copy"; }, 1400);
+});
+
+renderAll();
+</script>
+
+</html>
