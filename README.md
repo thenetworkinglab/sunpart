@@ -22,7 +22,18 @@ system fonts and works fine.)
 
 1. **Describe your disk** the way `format` reports it — paste the label
    line, e.g. `cyl 2733 alt 2 hd 19 sec 80` — or pick a classic Sun disk
-   from the preset list (SUN0207 through SUN4.2G).
+   from the preset list (SUN0207 through SUN4.2G). For an unknown drive
+   with only a manufacturer's spec sheet, the **spec translator** turns a
+   formatted capacity (GB/MB or a guaranteed sector count) into a valid
+   Sun label geometry — ZBR means the physical CHS figures in the manual
+   don't multiply out, so capacity is the only number that matters.
+   Building a ZuluSCSI/BlueSCSI disk instead? The translator's **image
+   creator** mode inverts the problem: pick a classic Sun disk to emulate
+   (or a target size), and it emits the exact byte count and `truncate`/`dd`
+   command to create the image — sized to hold the label's cylinders
+   precisely, named for the emulator (`HD3.img` works on ZuluSCSI and
+   BlueSCSI v2 alike), with SCSI ID 3 defaulted because Sun expects
+   its boot disk `sd0` there.
 2. **Lay out slices `a`–`h`** by mount point and size in MB (or cylinders).
    Sizes round up to whole cylinders and slices are packed sequentially on
    cylinder boundaries, so overlaps are impossible by construction. One

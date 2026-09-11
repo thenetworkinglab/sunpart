@@ -86,6 +86,7 @@
   --focus: #9C90E8;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -111,7 +112,7 @@ h1 {
   margin: 2px 0 6px; text-wrap: balance;
 }
 h1 .sect { color: var(--accent); }
-.lede { color: var(--muted); max-width: 62ch; margin: 0 0 26px; }
+.lede { color: var(--muted); margin: 0 0 26px; }
 .lede code { font-size: 13px; background: var(--surface2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
 
 .card {
@@ -173,6 +174,10 @@ select {
   color: var(--muted); font-variant-numeric: tabular-nums;
 }
 .geo-facts b { color: var(--ink); font-weight: 600; }
+.xnote {
+  font-size: 12.5px; color: var(--muted); margin: 12px 0 0;
+}
+.xnote b { font-weight: 600; color: var(--ink); }
 
 /* Disk map */
 .diskmap { position: relative; margin-top: 4px; }
@@ -292,7 +297,7 @@ pre.term .hi { color: var(--term-hi); font-weight: 600; }
   color: var(--term-ink); font-size: 12px; padding: 4px 10px;
 }
 .copybtn:hover { color: var(--term-hi); border-color: var(--term-hi); }
-.outnote { font-size: 12.5px; color: var(--muted); margin-top: 10px; max-width: 78ch; }
+.outnote { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
 
 footer {
   margin-top: 36px; font-family: "IBM Plex Mono", monospace;
@@ -311,10 +316,88 @@ footer {
     <span>SUNPART(8)</span>
   </div>
   <h1>sunpart <span class="sect">— disk partition layout planner</span></h1>
-  <p class="lede">Describe your disk the way <code>format</code> reports it, lay out slices
-  <span class="mono">a–h</span> in megabytes, and get back cylinder-aligned numbers you can type
-  straight into the partition menu. Everything is packed on cylinder boundaries, so overlaps are
-  impossible; the checks below tell you if the layout will boot and install.</p>
+  <p class="lede">Start from whatever you have — a bare drive and its manufacturer's spec sheet,
+  or the label line <code>format</code> already reports — and lay out slices
+  <span class="mono">a–h</span> in megabytes. The translator turns a formatted capacity into a
+  Sun label geometry, the planner packs everything on cylinder boundaries so overlaps are
+  impossible, the checks tell you if the layout will boot and install, and the output is
+  cylinder-aligned numbers you can type straight into the partition menu.</p>
+
+  <section class="card">
+    <h2>Spec translator — manufacturer's manual → Sun label</h2>
+    <div class="tabs" role="tablist" id="xmodetabs">
+      <button role="tab" aria-selected="true" data-xmode="real">Translate a real disk</button>
+      <button role="tab" aria-selected="false" data-xmode="image">Create a blank image (ZuluSCSI / BlueSCSI)</button>
+    </div>
+    <div id="xreal">
+    <div class="geo-fields" style="margin-top:0">
+      <div class="field"><label for="x_cap">formatted capacity</label><input id="x_cap" inputmode="decimal" value="4.35"></div>
+      <div class="field"><label for="x_unit">unit</label>
+        <select id="x_unit">
+          <option value="gb" selected>GB (10⁹)</option>
+          <option value="mb">MB (10⁶)</option>
+          <option value="gib">GiB (2³⁰)</option>
+          <option value="mib">MiB (2²⁰)</option>
+          <option value="blocks">512-byte blocks</option>
+        </select></div>
+      <div class="field"><label for="x_hd">heads</label><input id="x_hd" inputmode="numeric" value="10" placeholder="auto"></div>
+      <div class="field"><label for="x_sec">sec/track</label><input id="x_sec" placeholder="auto"></div>
+    </div>
+    <div class="geo-facts" id="xout"></div>
+    <div class="editor-foot">
+      <button id="xusebtn" class="primary">Use as disk geometry ↓</button>
+      <span class="note">Leave heads and/or sec/track blank (<em>auto</em>) and sunpart picks values that
+      waste the least — for a big SSD, auto heads is usually required to fit the 16-bit cylinder field.</span>
+    </div>
+    <p class="xnote"><b>Why only capacity matters:</b> SCSI drives use zone bit recording — outer
+    tracks carry more sectors — so the manual's cylinders × heads × sectors don't multiply out,
+    and “bytes per track / per surface” figures are <em>unformatted</em> capacity you can never use.
+    Take the <b>formatted capacity</b> (or guaranteed sector count) from the manual; the label
+    geometry is just bookkeeping for the driver. Any hd × sec pair loses less than one cylinder to
+    rounding, plus the two alternates. If the manual only quotes unformatted capacity, the formatted
+    figure is typically 80–85% of it.</p>
+    </div>
+
+    <div id="ximage" hidden>
+    <div class="geo-fields" style="margin-top:0">
+      <div class="field"><label for="i_src">disk to emulate</label>
+        <select id="i_src"><option value="custom" selected>Custom size…</option></select></div>
+      <div class="field" id="i_capf"><label for="i_cap">target size</label><input id="i_cap" inputmode="decimal" value="2.1"></div>
+      <div class="field" id="i_unitf"><label for="i_unit">unit</label>
+        <select id="i_unit">
+          <option value="gb" selected>GB (10⁹)</option>
+          <option value="mb">MB (10⁶)</option>
+          <option value="gib">GiB (2³⁰)</option>
+          <option value="mib">MiB (2²⁰)</option>
+        </select></div>
+      <div class="field"><label for="i_id">SCSI ID</label>
+        <select id="i_id">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+          <option value="3" selected>3 — Sun boot disk (sd0)</option>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+        </select></div>
+    </div>
+    <div class="geo-facts" id="iout"></div>
+    <div class="termwrap" style="margin-top:12px">
+      <pre class="term" id="iterm"></pre>
+      <button class="copybtn" id="icopybtn">Copy</button>
+    </div>
+    <div class="editor-foot">
+      <button id="iusebtn" class="primary">Use as disk geometry ↓</button>
+      <span class="note">Make the image, then lay out slices below — the format dialogue at the
+      bottom is ready to type on first boot.</span>
+    </div>
+    <p class="xnote"><b>How this works:</b> with an emulator you choose the disk, so sunpart sizes
+    the image to hold the label's cylinders <em>exactly</em> — geometry × 512 bytes, zero waste.
+    Emulating a known Sun disk is the smoothest path on SunOS&nbsp;4.x: <code>format</code>
+    recognizes it by name from format.dat, no manual geometry entry at all. The filename encodes the
+    device: <span class="mono">HD3.img</span> = hard disk, SCSI ID 3. LUN and sector size are
+    optional fields with the right defaults for hard disks (LUN 0, 512 bytes), so the short name is
+    all you need on ZuluSCSI and BlueSCSI&nbsp;v2 alike (only the old BlueSCSI&nbsp;v1 firmware
+    insisted on <span class="mono">.hda</span>). Sun expects the boot disk sd0 at target 3. Put the image in the SD card's root directory —
+    and note FAT32 caps files at 4&nbsp;GiB, so use exFAT for anything bigger.</p>
+    </div>
+  </section>
 
   <section class="card">
     <h2>Disk geometry</h2>
@@ -378,7 +461,7 @@ footer {
 
   <section class="card" style="margin-top:18px">
     <h2>Enter it into format</h2>
-    <div class="tabs" role="tablist">
+    <div class="tabs" role="tablist" id="outtabs">
       <button role="tab" aria-selected="true" data-tab="sunos">SunOS 4.x dialogue</button>
       <button role="tab" aria-selected="false" data-tab="solaris">Solaris 2.x dialogue</button>
       <button role="tab" aria-selected="false" data-tab="verify">Expected “p” printout</button>
@@ -410,17 +493,27 @@ const LETTERS = ["a","b","d","e","f","g","h"];      // c handled separately
 const COLORS = { a:"--pa", b:"--pb", d:"--pd", e:"--pe", f:"--pf", g:"--pg", h:"--ph" };
 const SOLNUM = { a:0, b:1, c:2, d:3, e:4, f:5, g:6, h:7 };
 
+// Geometries verified against the canonical Solaris/illumos format.dat
+// (SUN4.2G is from the later Solaris 2.5.1+ format.dat).
 const PRESETS = [
+  ["SUN0104 (104 MB)",   974, 2,  6, 35],
   ["SUN0207 (207 MB)",  1254, 2,  9, 36],
+  ["SUN0327 (327 MB)",  1545, 2,  9, 46],
+  ["SUN0340 (340 MB)",  1538, 2,  6, 72],
   ["SUN0424 (424 MB)",  1151, 2,  9, 80],
   ["SUN0535 (535 MB)",  1866, 2,  7, 80],
   ["SUN0669 (669 MB)",  1614, 2, 15, 54],
+  ["SUN1.0G (1.0 GB)",  1703, 2, 15, 80],
   ["SUN1.05 (1.05 GB)", 2036, 2, 14, 72],
   ["SUN1.3G (1.3 GB)",  1965, 2, 17, 80],
   ["SUN2.1G (2.1 GB)",  2733, 2, 19, 80],
   ["SUN2.9G (2.9 GB)",  2734, 2, 21, 99],
   ["SUN4.2G (4.2 GB)",  3880, 2, 16, 135],
+  ["Quantum ProDrive 80S (85 MB)",  832, 2, 6, 34],
+  ["Quantum ProDrive 105S (105 MB)", 974, 2, 6, 35],
+  ["CDC Wren IV 94171-344 (327 MB)", 1545, 2, 9, 46],
 ];
+PRESETS.sort((a, b) => a[1] * a[3] * a[4] - b[1] * b[3] * b[4]);
 
 let state = {
   ncyl: 2733, alt: 2, hd: 19, sec: 80,
@@ -751,6 +844,168 @@ function renderAll() {
   save();
 }
 
+// ---- spec translator ----
+const XUNITS = { gb: 1e9, mb: 1e6, gib: 1073741824, mib: 1048576, blocks: 512 };
+let xgeo = null;
+
+function evalGeo(total, hd, sec) {
+  const cb = hd * sec;
+  const pcyl = Math.floor(total / cb);
+  const ncyl = pcyl - 2;                    // reserve 2 alternate cylinders
+  if (ncyl < 1 || ncyl > 65535) return null; // ncyl is 16-bit in the Sun label
+  return { hd, sec, cb, ncyl, usable: ncyl * cb };
+}
+
+function xlate() {
+  const out = $("xout"), btn = $("xusebtn");
+  xgeo = null;
+  const val = parseFloat($("x_cap").value);
+  if (!(val > 0)) {
+    out.innerHTML = `<span>Enter the formatted capacity from the manual.</span>`;
+    btn.disabled = true;
+    return;
+  }
+  const total = Math.floor((val * XUNITS[$("x_unit").value]) / BLK);
+  const hdRaw = $("x_hd").value.trim();
+  const secRaw = $("x_sec").value.trim();
+  // 64–255 sec/track is the idiomatic range for real Sun labels of this era;
+  // going lower saves at most a few hundred KB and looks alien to old tools.
+  const hds = hdRaw ? [Math.max(1, Math.floor(+hdRaw || 0) || 1)]
+                    : Array.from({ length: 64 }, (_, i) => i + 1);
+  const secs = secRaw ? [Math.max(1, Math.floor(+secRaw || 0) || 1)]
+                      : Array.from({ length: 192 }, (_, i) => i + 64);
+  let best = null;
+  for (const hd of hds) {
+    for (const sec of secs) {
+      const g = evalGeo(total, hd, sec);
+      if (g && (!best || g.usable > best.usable)) best = g;
+    }
+  }
+  if (!best) {
+    out.innerHTML = `<span>No workable geometry — cyl must land between 1 and 65,535. Try more heads or sectors/track.</span>`;
+    btn.disabled = true;
+    return;
+  }
+  xgeo = best;
+  const lost = total - best.usable;
+  out.innerHTML =
+    `<span>label: <b>cyl ${fmt(best.ncyl)} alt 2 hd ${best.hd} sec ${best.sec}</b></span>` +
+    `<span>usable: <b>${fmt(best.usable)}</b> of ${fmt(total)} blocks = <b>${mb1(best.usable)}</b> MB</span>` +
+    `<span>lost to rounding + alternates: <b>${fmt(lost)}</b> blocks (${(lost * BLK / 1024).toFixed(0)} KB)</span>`;
+  btn.disabled = false;
+}
+
+for (const id of ["x_cap", "x_unit", "x_hd", "x_sec"]) {
+  $(id).addEventListener("input", xlate);
+}
+$("xusebtn").addEventListener("click", () => {
+  if (!xgeo) return;
+  state.ncyl = xgeo.ncyl; state.alt = 2; state.hd = xgeo.hd; state.sec = xgeo.sec;
+  $("geoline").value = `cyl ${state.ncyl} alt ${state.alt} hd ${state.hd} sec ${state.sec}`;
+  renderAll();
+});
+xlate();
+
+// ---- image creator (ZuluSCSI / BlueSCSI) ----
+let igeo = null;
+
+// Find a geometry whose total size lands nearest the target. Prefer shapes a
+// real Sun label would have — 4+ heads, 1000+ cylinders — over an exact byte
+// match; since we define the image size, a sub-MB drift from the target is
+// free, but a 1-headed 35,000-cylinder "drive" looks alien to old tools.
+function findGeoNear(targetBlocks) {
+  const better = (a, b) => a.diff < b.diff || (a.diff === b.diff && a.cb > b.cb);
+  let best = null, bestPref = null;
+  for (let hd = 1; hd <= 64; hd++) {
+    for (let sec = 64; sec <= 255; sec++) {
+      const cb = hd * sec;
+      const ncyl = Math.round(targetBlocks / cb) - 2;
+      if (ncyl < 1 || ncyl > 65535) continue;
+      const tot = (ncyl + 2) * cb;
+      const cand = { hd, sec, cb, ncyl, tot, diff: Math.abs(tot - targetBlocks) };
+      if (!best || better(cand, best)) best = cand;
+      if (hd >= 4 && ncyl >= 1000 && (!bestPref || better(cand, bestPref))) bestPref = cand;
+    }
+  }
+  return bestPref || best;
+}
+
+function imgUpdate() {
+  const src = $("i_src").value;
+  const custom = src === "custom";
+  $("i_capf").hidden = !custom;
+  $("i_unitf").hidden = !custom;
+  const out = $("iout"), term = $("iterm");
+  igeo = null;
+
+  let g = null;
+  if (custom) {
+    const val = parseFloat($("i_cap").value);
+    if (val > 0) g = findGeoNear(Math.floor((val * XUNITS[$("i_unit").value]) / BLK));
+  } else {
+    const p = PRESETS[+src];
+    g = { ncyl: p[1], hd: p[3], sec: p[4], cb: p[3] * p[4], tot: (p[1] + p[2]) * p[3] * p[4] };
+  }
+  if (!g) {
+    out.innerHTML = `<span>Enter a target size for the image.</span>`;
+    term.textContent = "";
+    $("iusebtn").disabled = true;
+    return;
+  }
+  igeo = g;
+  const bytes = g.tot * BLK;
+  const id = $("i_id").value;
+  const fname = `HD${id}.img`;
+  out.innerHTML =
+    `<span>label: <b>cyl ${fmt(g.ncyl)} alt 2 hd ${g.hd} sec ${g.sec}</b> (pcyl ${fmt(g.ncyl + 2)})</span>` +
+    `<span>image: <b>${fmt(bytes)}</b> bytes = ${mb1(g.tot)} MB exactly</span>` +
+    `<span>usable for slices: <b>${fmt(g.ncyl * g.cb)}</b> blocks (${mb1(g.ncyl * g.cb)} MB)</span>`;
+  const fname1 = `HD${id}0_512.hda`;
+  term.innerHTML =
+    `<span class="dim"># create the empty image in the SD card's root directory — pick your OS:</span>\n` +
+    `<span class="dim">Windows:</span>  fsutil file createnew <span class="hi">${fname}</span> <span class="hi">${bytes}</span>\n` +
+    `<span class="dim">Linux:</span>    truncate -s <span class="hi">${bytes}</span> <span class="hi">${fname}</span>\n` +
+    `<span class="dim">Mac OS X:</span> mkfile -n <span class="hi">${bytes}</span> <span class="hi">${fname}</span>\n` +
+    `\n<span class="dim"># BlueSCSI v1 requires the long-form name (ID ${id}, LUN 0, 512-byte blocks):</span>\n` +
+    `<span class="dim">Windows:</span>  fsutil file createnew <span class="hi">${fname1}</span> <span class="hi">${bytes}</span>\n` +
+    `<span class="dim">Linux:</span>    truncate -s <span class="hi">${bytes}</span> <span class="hi">${fname1}</span>\n` +
+    `<span class="dim">Mac OS X:</span> mkfile -n <span class="hi">${bytes}</span> <span class="hi">${fname1}</span>\n`;
+  $("iusebtn").disabled = false;
+}
+
+{
+  const sel = $("i_src");
+  for (let i = 0; i < PRESETS.length; i++) {
+    const o = document.createElement("option");
+    o.value = i; o.textContent = PRESETS[i][0];
+    sel.appendChild(o);
+  }
+}
+for (const id of ["i_src", "i_cap", "i_unit", "i_id"]) {
+  $(id).addEventListener("input", imgUpdate);
+}
+$("iusebtn").addEventListener("click", () => {
+  if (!igeo) return;
+  state.ncyl = igeo.ncyl; state.alt = 2; state.hd = igeo.hd; state.sec = igeo.sec;
+  $("geoline").value = `cyl ${state.ncyl} alt ${state.alt} hd ${state.hd} sec ${state.sec}`;
+  renderAll();
+});
+$("icopybtn").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("iterm").innerText); } catch (e) {}
+  $("icopybtn").textContent = "Copied";
+  setTimeout(() => { $("icopybtn").textContent = "Copy"; }, 1400);
+});
+$("xmodetabs").addEventListener("click", e => {
+  const b = e.target.closest("button[data-xmode]");
+  if (!b) return;
+  const image = b.dataset.xmode === "image";
+  $("xreal").hidden = image;
+  $("ximage").hidden = !image;
+  document.querySelectorAll("#xmodetabs button").forEach(x =>
+    x.setAttribute("aria-selected", x === b ? "true" : "false"));
+});
+imgUpdate();
+
 // ---- events ----
 $("parsebtn").addEventListener("click", () => {
   const m = $("geoline").value.match(/cyl\D+(\d+)\D+alt\D+(\d+)\D+hd\D+(\d+)\D+sec\D+(\d+)/i);
@@ -816,7 +1071,7 @@ $("suggestbtn").addEventListener("click", () => {
   renderAll();
 });
 
-document.querySelector(".tabs").addEventListener("click", e => {
+$("outtabs").addEventListener("click", e => {
   const b = e.target.closest("button[data-tab]");
   if (!b) return;
   state.tab = b.dataset.tab;
